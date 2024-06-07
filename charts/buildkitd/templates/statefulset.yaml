@@ -5,7 +5,9 @@ metadata:
   labels:
     {{- include "buildkitd.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   serviceName: {{ include "buildkitd.fullname" . }}
   selector:
     matchLabels:
