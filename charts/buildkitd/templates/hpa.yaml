@@ -4,7 +4,7 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "buildkitd.fullname" . }}
   labels:
-    {{- include "buildkitd.selectorLlabels" . | nindent 4 }}
+    {{- include "buildkitd.selectorLabels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
