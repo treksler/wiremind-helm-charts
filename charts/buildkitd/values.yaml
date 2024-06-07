@@ -110,3 +110,6 @@ startupProbe:
 extraSecurityContext: {}
 
 lifecycle: {}
+
+terminationGracePeriodSeconds: 30
+
