@@ -26,8 +26,10 @@ data:
       socketPath = "/run/{{ .Values.user.name }}/{{ .Values.user.uid }}/buildkit/otel-grpc.sock"
 
     [grpc]
+      {{- if .Values.service.enabled }}
       address = [ "tcp://0.0.0.0:{{ .Values.config.port }}" ]
       debugAddress = "0.0.0.0:{{ .Values.config.debugPort }}"
+      {{- end }}
       uid = {{ .Values.user.uid }}
       gid = {{ .Values.user.gid }}
 
@@ -97,7 +99,9 @@ metadata:
 data:
   XDG_RUNTIME_DIR: "/run/{{ .Values.user.name }}/{{ .Values.user.uid }}"
   TMPDIR: "/run/{{ .Values.user.name }}/{{ .Values.user.uid }}"
+  {{- if .Values.service.enabled }}
   BUILDKIT_HOST: "tcp://localhost:{{ .Values.config.port }}"
+  {{- end }}
   OTEL_SERVICE_NAME: {{ template "buildkitd.fullname" . }}
   OTEL_METRIC_EXPORT_INTERVAL: {{ .Values.config.otel.metrics.export_interval | quote }}
   OTEL_METRIC_EXPORT_TIMEOUT: {{ .Values.config.otel.metrics.export_timeout | quote }}

@@ -12,6 +12,9 @@ user:
 nameOverride: ""
 fullnameOverride: ""
 
+service:
+  enabled: true
+
 resources: {}
 #  requests:
 #    cpu: "100m"

@@ -59,6 +59,7 @@ spec:
             {{- with .Values.extraArgs }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          {{- if .Values.service.enabled }}
           ports:
             - name: tcp
               containerPort: {{ .Values.config.port }}
@@ -66,6 +67,7 @@ spec:
             - name: debug
               containerPort: {{ .Values.config.debugPort }}
               protocol: TCP
+          {{- end }}
           env:
             - name: NO_COLOR
               value: "true"
