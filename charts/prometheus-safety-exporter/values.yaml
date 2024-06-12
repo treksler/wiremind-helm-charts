@@ -72,23 +72,42 @@ jsonExporter:
       memory: 64Mi
   startupProbe:
     httpGet:
-      path: /probe?target=http://localhost:8000/results.json
+      path: /
       port: http
-    failureThreshold: 10
+    failureThreshold: 50
   livenessProbe:
     timeoutSeconds: 3
-    periodSeconds: 120
+    periodSeconds: 300
     httpGet:
-      path: /probe?target=http://localhost:8000/results.json
+      path: /
       port: http
-    failureThreshold: 3
+    failureThreshold: 5
   readinessProbe:
     timeoutSeconds: 3
     periodSeconds: 120
     failureThreshold: 2
     httpGet:
-      path: /probe?target=http://localhost:8000/results.json
+      path: /
       port: http
+
+## Custom PrometheusRules to be defined
+## The value is evaluated as a template, so, for example, the value can depend on .Release or .Chart
+## ref: https://github.com/coreos/prometheus-operator#customresourcedefinitions
+prometheusRule:
+  enabled: false
+  additionalLabels: {}
+  namespace: ""
+  rules: []
+    ## These are just examples rules, please adapt them to your needs.
+    ## Make sure to constraint the rules to the current service.
+    #  - alert: NoSafetyVulnerabilitieFoundExist
+    #    expr: safety_vulnerabilities_found{job="{{ .Release.Namespace}}"/{{ include "prometheus-memcached-exporter.fullname" . }}"} == 0
+    #    for: 3h
+    #    labels:
+    #      severity: error
+    #    annotations:
+    #      summary: Safety has not returned any recent value for {{ "{{ $labels.instance }}" }}
+    #      description: Safety has not returned any recent value for {{ "{{ $labels.instance }}" }}
 
 # Additional volumes on the output Deployment definition.
 volumes: []
