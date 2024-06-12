@@ -43,6 +43,7 @@ tolerations: []
 affinity: {}
 
 config:
+  rootless: true
   debug: false
   trace: false
   logFormat: "text"
