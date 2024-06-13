@@ -23,8 +23,10 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
       securityContext:
+        {{- if .Values.config.rootless }}
         # To change UID/GID, you need to rebuild the image
         fsGroup: {{ .Values.user.uid }}
+        {{- end }}
         # Set this to avoid massive cascading chown on restart
         fsGroupChangePolicy: "OnRootMismatch"
       volumes:
@@ -38,7 +40,7 @@ spec:
             sizeLimit: 1Gi
       containers:
         - name: buildkitd
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag | default (printf "v%s-rootless" .Chart.AppVersion) }}
+          image: {{ .Values.image.repository }}:{{- if .Values.config.rootless }}{{ .Values.image.tag | default (printf "v%s-rootless" .Chart.AppVersion) }}{{- else }}{{ .Values.image.tag | default (printf "v%s" .Chart.AppVersion) }}{{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
             - configMapRef:
@@ -50,11 +52,12 @@ spec:
             # `nosuid,nodev`.
             # https://github.com/moby/buildkit/issues/879#issuecomment-1240347038
             - name: {{ include "buildkitd.fullname" . }}
-              mountPath: /home/{{ .Values.user.name }}/.local/share/buildkit
+              mountPath: {{- if .Values.config.rootless }} /home/{{ .Values.user.name }}/.local/share/buildkit {{- else }} /var/lib/buildkit {{- end }}
             - name: config
-              mountPath: /home/{{ .Values.user.name }}/.config/buildkit
+              mountPath: {{- if .Values.config.rootless }} /home/{{ .Values.user.name }}/.config/buildkit/buildkitd.toml {{- else }} /etc/buildkitd.toml {{- end }}
+              subPath: buildkitd.toml
             - name: runtime-dir
-              mountPath: /run/{{ .Values.user.name }}/{{ .Values.user.uid }}
+              mountPath: /run{{ if .Values.config.rootless }}/{{ .Values.user.name }}/{{ .Values.user.uid }}{{ end }}
           args:
             {{- with .Values.extraArgs }}
             {{- toYaml . | nindent 12 }}
@@ -134,12 +137,16 @@ spec:
             allowPrivilegeEscalation: true
             # It needs to create some local files in /home/user/.local
             readOnlyRootFilesystem: false
+            {{- if .Values.config.rootless }}
             seccompProfile:
               type: Unconfined
-            privileged: false
-            runAsNonRoot: true
+            {{- end }}
+            privileged: {{ not .Values.config.rootless }}
+            runAsNonRoot: {{ .Values.config.rootless }}
+            {{- if .Values.config.rootless }}
             runAsUser: {{ .Values.user.uid }}
             runAsGroup:  {{ .Values.user.gid }}
+            {{- end }}
             {{- with .Values.extraSecurityContext }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

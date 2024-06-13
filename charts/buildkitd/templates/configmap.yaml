@@ -11,9 +11,11 @@ data:
   buildkitd.toml: |
     # See: https://docs.docker.com/build/buildkit/toml-configuration/
     # See: https://github.com/moby/buildkit/blob/master/docs/buildkitd.toml.md
+    {{- if .Values.config.rootless }}
     rootless = true
     # root is where all buildkit state is stored.
     root = "/home/{{ .Values.user.name }}/.local/share/buildkit/"
+    {{- end }}
     debug = {{ .Values.config.debug }}
     trace = {{ .Values.config.trace }}
 
@@ -30,18 +32,24 @@ data:
       address = [ "tcp://0.0.0.0:{{ .Values.config.port }}" ]
       debugAddress = "0.0.0.0:{{ .Values.config.debugPort }}"
       {{- end }}
+      {{- if .Values.config.rootless }}
       uid = {{ .Values.user.uid }}
       gid = {{ .Values.user.gid }}
+      {{- end }}
 
     [worker.oci]
       enabled = true
+      {{- if .Values.config.rootless }}
       rootless = true
+      {{- end }}
       selinux = {{ .Values.config.workerOci.selinux }}
       platforms = [{{ join "," .Values.config.workerOci.platforms }}]
       snapshotter = {{ .Values.config.workerOci.snapshotter | quote }}
       # Whether run subprocesses in main pid namespace or not, this is useful for
       # running rootless buildkit inside a container.
+      {{- if .Values.config.rootless }}
       noProcessSandbox = true
+      {{- end }}
       {{- if .Values.config.workerOci.maxParallelism }}
       max-parallelism = {{ .Values.config.workerOci.maxParallelism }}
       {{- end }}
@@ -97,8 +105,8 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 data:
-  XDG_RUNTIME_DIR: "/run/{{ .Values.user.name }}/{{ .Values.user.uid }}"
-  TMPDIR: "/run/{{ .Values.user.name }}/{{ .Values.user.uid }}"
+  XDG_RUNTIME_DIR: {{- if .Values.config.rootless }} "/run/{{ .Values.user.name }}/{{ .Values.user.uid }}" {{- else }} "/run" {{- end }}
+  TMPDIR: {{- if .Values.config.rootless }} "/run/{{ .Values.user.name }}/{{ .Values.user.uid }}" {{- else }} "/run" {{- end }}
   {{- if .Values.service.enabled }}
   BUILDKIT_HOST: "tcp://localhost:{{ .Values.config.port }}"
   {{- end }}
