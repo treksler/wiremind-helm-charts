@@ -3,6 +3,8 @@ image:
   pullPolicy: IfNotPresent
   tag: ""
 
+imagePullSecrets: []
+
 # User 1000 is used in official images
 user:
   name: "user"
